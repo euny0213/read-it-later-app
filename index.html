@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Read It Later - 나중에 읽기</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <style>
+        .fade-in { animation: fadeIn 0.3s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .card-hover { transition: all 0.2s; }
+        .card-hover:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.12); }
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .glass { backdrop-filter: blur(10px); background: rgba(255,255,255,0.9); }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- 로그인 화면 -->
+    <div id="loginScreen" class="min-h-screen gradient-bg flex items-center justify-center p-4">
+        <div class="glass rounded-3xl shadow-2xl p-8 w-full max-w-md fade-in">
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center w-20 h-20 bg-white bg-opacity-20 rounded-full mb-4">
+                    <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
+                    </svg>
+                </div>
+                <h1 class="text-4xl font-bold text-white mb-2">Read It Later</h1>
+                <p class="text-white text-opacity-90">나중에 읽을 링크들을 저장하세요</p>
+            </div>
+            
+            <div class="space-y-4">
+                <input
+                    type="text"
+                    id="usernameInput"
+                    placeholder="사용자 이름을 입력하세요"
+                    class="w-full px-4 py-4 border-0 rounded-xl focus:ring-4 focus:ring-white focus:ring-opacity-30 outline-none transition-all bg-white bg-opacity-90"
+                    onkeypress="handleLoginKeyPress(event)"
+                />
+                <button
+                    onclick="handleLogin()"
+                    class="w-full bg-white text-gray-800 py-4 rounded-xl hover:bg-opacity-90 transition-all font-semibold shadow-lg transform hover:scale-105"
+                >
+                    시작하기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 메인 앱 화면 -->
+    <div id="mainApp" class="hidden">
+        <!-- 헤더 -->
+        <header class="bg-white shadow-sm sticky top-0 z-10">
+            <div class="max-w-6xl mx-auto px-4 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <svg class="w-8 h-8 text-indigo-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
+                        </svg>
+                        <h1 class="text-2xl font-bold text-gray-800">Read It Later</h1>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <span id="username" class="text-gray-600 flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                            </svg>
+                        </span>
+                        <button onclick="handleLogout()" class="text-gray-500 hover:text-red-500 transition-colors">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- 컨텐츠 영역 -->
+        <div class="max-w-6xl mx-auto p-6">
+            <!-- 상단 섹션 -->
+            <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 space-y-4 md:space-y-0">
+                <div>
+                    <h2 class="text-3xl font-bold text-gray-800 mb-2">저장된 링크</h2>
+                    <p class="text-gray-600" id="linkCount">0개의 링크가 저장되어 있습니다</p>
+                </div>
+                <button
+                    onclick="showAddForm()"
+                    class="bg-indigo-600 text-white px-8 py-4 rounded-xl hover:bg-indigo-700 transition-all font-semibold shadow-lg transform hover:scale-105 flex items-center justify-center"
+                >
+                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                    새 링크 추가
+                </button>
+            </div>
+
+            <!-- 링크 추가 폼 -->
+            <div id="addForm" class="hidden mb-8">
+                <div class="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-xl font-semibold text-gray-800">새 링크 추가</h3>
+                        <button onclick="hideAddForm()" class="text-gray-400 hover:text-gray-600">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">URL</label>
+                            <div class="flex space-x-3">
+                                <input
+                                    type="url"
+                                    id="urlInput"
+                                    placeholder="https://example.com"
+                                    class="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none transition-all"
+                                    onkeypress="handleUrlKeyPress(event)"
+                                />
+                                <button
+                                    onclick="pasteFromClipboard()"
+                                    class="px-6 py-3 text-indigo-600 border-2 border-indigo-600 rounded-xl hover:bg-indigo-50 transition-all font-medium"
+                                >
+                                    붙여넣기
+                                </button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">메모 (선택사항)</label>
+                            <input
+                                type="text"
+                                id="memoInput"
+                                placeholder="이 링크에 대한 간단한 메모를 남겨보세요"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none transition-all"
+                                maxlength="200"
+                                onkeypress="handleMemoKeyPress(event)"
+                            />
+                        </div>
+
+                        <button
+                            onclick="addUrl()"
+                            class="w-full bg-indigo-600 text-white py-4 rounded-xl hover:bg-indigo-700 transition-all font-semibold shadow-lg transform hover:scale-105"
+                        >
+                            링크 저장하기
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 링크 목록 -->
+            <div id="linksList" class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                <!-- 링크 카드들이 여기에 동적으로 추가됩니다 -->
+            </div>
+
+            <!-- 빈 상태 -->
+            <div id="emptyState" class="text-center py-20">
+                <svg class="w-24 h-24 text-gray-300 mx-auto mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
+                </svg>
+                <h3 class="text-2xl font-semibold text-gray-600 mb-2">저장된 링크가 없습니다</h3>
+                <p class="text-gray-500 mb-8">첫 번째 링크를 저장해서 시작해보세요!</p>
+                <button
+                    onclick="showAddForm()"
+                    class="bg-indigo-600 text-white px-8 py-4 rounded-xl hover:bg-indigo-700 transition-all font-semibold shadow-lg transform hover:scale-105"
+                >
+                    첫 링크 추가하기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 전역 변수
+        let currentUser = '';
+        let urlList = JSON.parse(localStorage.getItem('readItLaterUrls') || '[]');
+
+        // 로그인 처리
+        function handleLogin() {
+            const username = document.getElementById('usernameInput').value.trim();
+            if (username) {
+                currentUser = username;
+                document.getElementById('username').textContent = username;
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('mainApp').classList.remove('hidden');
+                updateDisplay();
+            } else {
+                alert('사용자 이름을 입력해주세요!');
+            }
+        }
+
+        function handleLoginKeyPress(event) {
+            if (event.key === 'Enter') {
+                handleLogin();
+            }
+        }
+
+        // 로그아웃
+        function handleLogout() {
+            if (confirm('정말 로그아웃 하시겠습니까?')) {
+                currentUser = '';
+                document.getElementById('loginScreen').classList.remove('hidden');
+                document.getElementById('mainApp').classList.add('hidden');
+                document.getElementById('usernameInput').value = '';
+            }
+        }
+
+        // 폼 표시/숨김
+        function showAddForm() {
+            document.getElementById('addForm').classList.remove('hidden');
+            document.getElementById('urlInput').focus();
+        }
+
+        function hideAddForm() {
+            document.getElementById('addForm').classList.add('hidden');
+            document.getElementById('urlInput').value = '';
+            document.getElementById('memoInput').value = '';
+        }
+
+        // 클립보드에서 붙여넣기
+        async function pasteFromClipboard() {
+            try {
+                const text = await navigator.clipboard.readText();
+                if (text.includes('http')) {
+                    document.getElementById('urlInput').value = text;
+                } else {
+                    alert('클립보드에 유효한 URL이 없습니다.');
+                }
+            } catch (err) {
+                alert('클립보드 접근이 불가능합니다. 직접 입력해주세요.');
+            }
+        }
+
+        // URL 추가
+        function addUrl() {
+            const url = document.getElementById('urlInput').value.trim();
+            const memo = document.getElementById('memoInput').value.trim();
+
+            if (!url) {
+                alert('URL을 입력해주세요!');
+                return;
+            }
+
+            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                alert('올바른 URL 형식이 아닙니다. http:// 또는 https://로 시작해야 합니다.');
+                return;
+            }
+
+            const newItem = {
+                id: Date.now(),
+                url: url,
+                memo: memo,
+                domain: getDomainFromUrl(url),
+                createdAt: new Date().toLocaleString('ko-KR'),
+                favicon: `https://www.google.com/s2/favicons?domain=${getDomainFromUrl(url)}&sz=32`
+            };
+
+            urlList.unshift(newItem);
+            saveToStorage();
+            updateDisplay();
+            hideAddForm();
+            
+            // 성공 알림
+            showToast('링크가 성공적으로 저장되었습니다!');
+        }
+
+        function handleUrlKeyPress(event) {
+            if (event.key === 'Enter') {
+                document.getElementById('memoInput').focus();
+            }
+        }
+
+        function handleMemoKeyPress(event) {
+            if (event.key === 'Enter') {
+                addUrl();
+            }
+        }
+
+        // 도메인 추출
+        function getDomainFromUrl(url) {
+            try {
+                const domain = new URL(url).hostname;
+                return domain.replace('www.', '');
+            } catch {
+                return 'Unknown';
+            }
+        }
+
+        // URL 삭제
+        function deleteUrl(id) {
+            if (confirm('이 링크를 삭제하시겠습니까?')) {
+                urlList = urlList.filter(item => item.id !== id);
+                saveToStorage();
+                updateDisplay();
+                showToast('링크가 삭제되었습니다.');
+            }
+        }
+
+        // URL 열기
+        function openUrl(url) {
+            window.open(url, '_blank');
+        }
+
+        // 로컬 스토리지에 저장
+        function saveToStorage() {
+            localStorage.setItem('readItLaterUrls', JSON.stringify(urlList));
+        }
+
+        // 화면 업데이트
+        function updateDisplay() {
+            const linksList = document.getElementById('linksList');
+            const emptyState = document.getElementById('emptyState');
+            const linkCount = document.getElementById('linkCount');
+
+            linkCount.textContent = `${urlList.length}개의 링크가 저장되어 있습니다`;
+
+            if (urlList.length === 0) {
+                linksList.innerHTML = '';
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+                linksList.innerHTML = urlList.map(item => `
+                    <div class="bg-white rounded-2xl shadow-lg hover:shadow-xl card-hover border border-gray-100 overflow-hidden fade-in">
+                        <div class="p-6">
+                            <div class="flex items-start space-x-4 mb-4">
+                                <img
+                                    src="${item.favicon}"
+                                    alt="사이트 아이콘"
+                                    class="w-10 h-10 rounded-lg flex-shrink-0"
+                                    onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIGZpbGw9Im5vbmUiIHZpZXdCb3g9IjAgMCAyNCAyNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJMMTMuMDkgOC4yNkwyMSA5TDEzLjA5IDE1Ljc0TDEyIDIyTDEwLjkxIDE1Ljc0TDMgOUwxMC45MSA4LjI2TDEyIDJaIiBmaWxsPSIjOTMzNEU2Ii8+Cjwvc3ZnPgo='"
+                                />
+                                <div class="flex-1 min-w-0">
+                                    <h3 class="text-lg font-semibold text-gray-800 truncate mb-1">${item.domain}</h3>
+                                    <p class="text-sm text-gray-500 flex items-center">
+                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                        ${item.createdAt}
+                                    </p>
+                                </div>
+                            </div>
+
+                            ${item.memo ? `
+                                <div class="bg-gray-50 rounded-lg p-3 mb-4">
+                                    <p class="text-gray-700 text-sm leading-relaxed">${item.memo}</p>
+                                </div>
+                            ` : ''}
+
+                            <div class="flex items-center justify-between pt-4 border-t border-gray-100">
+                                <button
+                                    onclick="openUrl('${item.url}')"
+                                    class="flex items-center text-indigo-600 hover:text-indigo-700 font-medium transition-colors"
+                                >
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                                    </svg>
+                                    열기
+                                </button>
+                                <button
+                                    onclick="deleteUrl(${item.id})"
+                                    class="text-red-500 hover:text-red-700 transition-colors"
+                                >
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // 토스트 알림
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 fade-in';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            updateDisplay();
+        });
+    </script>
+</body>
+</html>
