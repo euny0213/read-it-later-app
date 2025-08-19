@@ -197,9 +197,57 @@
     </div>
 
     <script>
-        // 전역 변수
+// 전역 변수
         let currentUser = '';
         let urlList = JSON.parse(localStorage.getItem('readItLaterUrls') || '[]');
+
+        // 자동 로그인 확인
+        function checkAutoLogin() {
+            const savedUser = localStorage.getItem('readItLaterUser');
+            if (savedUser) {
+                currentUser = savedUser;
+                document.getElementById('username').textContent = currentUser;
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('mainApp').classList.remove('hidden');
+                updateDisplay();
+                return true;
+            }
+            return false;
+        }
+
+        // 로그인 처리 (수정됨)
+        function handleLogin() {
+            const username = document.getElementById('usernameInput').value.trim();
+            if (username) {
+                currentUser = username;
+                // 사용자명을 로컬 스토리지에 저장 (자동 로그인용)
+                localStorage.setItem('readItLaterUser', username);
+                document.getElementById('username').textContent = username;
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('mainApp').classList.remove('hidden');
+                updateDisplay();
+            } else {
+                alert('사용자 이름을 입력해주세요!');
+            }
+        }
+
+        function handleLoginKeyPress(event) {
+            if (event.key === 'Enter') {
+                handleLogin();
+            }
+        }
+
+        // 로그아웃 (수정됨)
+        function handleLogout() {
+            if (confirm('정말 로그아웃 하시겠습니까?')) {
+                currentUser = '';
+                // 자동 로그인 정보 삭제
+                localStorage.removeItem('readItLaterUser');
+                document.getElementById('loginScreen').classList.remove('hidden');
+                document.getElementById('mainApp').classList.add('hidden');
+                document.getElementById('usernameInput').value = '';
+            }
+        }
 
         // 로그인 처리
         function handleLogin() {
@@ -409,10 +457,14 @@
             }, 3000);
         }
 
-        // 페이지 로드 시 초기화
-        document.addEventListener('DOMContentLoaded', function() {
-            updateDisplay();
-        });
+// 페이지 로드 시 초기화
+document.addEventListener('DOMContentLoaded', function() {
+    // 자동 로그인 확인
+    if (!checkAutoLogin()) {
+        // 자동 로그인이 안 되면 로그인 화면 표시
+        updateDisplay();
+    }
+});
     </script>
 </body>
 </html>
