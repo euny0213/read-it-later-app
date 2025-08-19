@@ -5,6 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Read It Later - 나중에 읽기</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
+  import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
+  
+  // 여기에 복사한 config 정보를 붙여넣으세요
+  const firebaseConfig = {
+  apiKey: "AIzaSyALuntra2Y6Pn1cQff7usiPZsZlDQT9TLw",
+  authDomain: "read-it-later-app-bc8e5.firebaseapp.com",
+  projectId: "read-it-later-app-bc8e5",
+  storageBucket: "read-it-later-app-bc8e5.firebasestorage.app",
+  messagingSenderId: "791930083195",
+  appId: "1:791930083195:web:7753575b586a8f5add0fde",
+  measurementId: "G-NSXFHSXRQ6"
+  };
+  
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  
+  // 전역에서 사용할 수 있도록 설정
+  window.firebaseDB = db;
+  window.firebaseCollection = collection;
+  window.firebaseAddDoc = addDoc;
+  window.firebaseGetDocs = getDocs;
+  window.firebaseDeleteDoc = deleteDoc;
+  window.firebaseDoc = doc;
+</script>
     <style>
         .fade-in { animation: fadeIn 0.3s ease-in; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
